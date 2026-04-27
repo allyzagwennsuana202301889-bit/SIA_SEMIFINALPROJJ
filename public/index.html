@@ -2,92 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>License Management System</title>
+  <title>License System</title>
   <style>
     body {
       font-family: Arial;
       margin: 20px;
       background: #f4f4f4;
     }
-
     h1 {
-      text-align: center;
+      color: #333;
     }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-    }
-
     input, select, button {
-      padding: 8px;
       margin: 5px;
+      padding: 8px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      background: white;
     }
-
     th, td {
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       padding: 10px;
       text-align: center;
     }
-
+    th {
+      background: #333;
+      color: white;
+    }
     button {
-      cursor: pointer;
-    }
-
-    .delete {
-      background: red;
-      color: white;
-    }
-
-    .status {
-      background: orange;
-      color: white;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>License Management System</h1>
+<h1>License Management System</h1>
 
-  <h3>Create License</h3>
-  <input type="text" id="name" placeholder="Holder Name">
-  <input type="text" id="type" placeholder="Type">
-  <input type="date" id="issueDate">
-  <input type="date" id="expiryDate">
-  <button onclick="createLicense()">Add</button>
+<!-- CREATE LICENSE -->
+<h2>Add License</h2>
+<input type="text" id="name" placeholder="Holder Name">
+<input type="text" id="type" placeholder="Type">
+<input type="date" id="issueDate">
+<input type="date" id="expiryDate">
+<button onclick="addLicense()">Add</button>
 
-  <h3>All Licenses</h3>
-  <button onclick="loadLicenses()">Refresh</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>License No.</th>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="licenseTable"></tbody>
-  </table>
-</div>
+<!-- LICENSE TABLE -->
+<h2>All Licenses</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>License No</th>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Status</th>
+      <th>Violation</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="licenseTable"></tbody>
+</table>
 
 <script>
 const API = "http://localhost:3000/api/licenses";
 
-// Load licenses
+// LOAD DATA
 async function loadLicenses() {
   const res = await fetch(API);
   const data = await res.json();
@@ -103,32 +90,40 @@ async function loadLicenses() {
         <td>${l.holderName}</td>
         <td>${l.type}</td>
         <td>${l.status}</td>
+        <td>${l.violation || "-"}</td>
         <td>
-          <button class="status" onclick="changeStatus(${l.id})">Status</button>
-          <button class="delete" onclick="deleteLicense(${l.id})">Delete</button>
+          <button onclick="deleteLicense(${l.id})">Delete</button>
+          <button onclick="updateStatus(${l.id})">Change Status</button>
         </td>
       </tr>
     `;
   });
 }
 
-// Create license
-async function createLicense() {
+// ADD LICENSE
+async function addLicense() {
   const holderName = document.getElementById("name").value;
   const type = document.getElementById("type").value;
   const issueDate = document.getElementById("issueDate").value;
   const expiryDate = document.getElementById("expiryDate").value;
 
+  if (!holderName || !type || !issueDate || !expiryDate) {
+    alert("Fill all fields!");
+    return;
+  }
+
   await fetch(API, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ holderName, type, issueDate, expiryDate })
   });
 
   loadLicenses();
 }
 
-// Delete license
+// DELETE LICENSE
 async function deleteLicense(id) {
   await fetch(`${API}/${id}`, {
     method: "DELETE"
@@ -137,21 +132,25 @@ async function deleteLicense(id) {
   loadLicenses();
 }
 
-// Change status
-async function changeStatus(id) {
+// UPDATE STATUS
+async function updateStatus(id) {
   const status = prompt("Enter status (active, expired, suspended, revoked, blocked):");
-  const violation = prompt("Violation (optional):");
+  const violation = prompt("Enter violation (optional):");
+
+  if (!status) return;
 
   await fetch(`${API}/${id}/status`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ status, violation })
   });
 
   loadLicenses();
 }
 
-// Auto load on page start
+// INITIAL LOAD
 loadLicenses();
 </script>
 

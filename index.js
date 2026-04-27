@@ -155,11 +155,6 @@ app.delete('/api/licenses/:id', (req, res) => {
 });
 
 
-app.get('/', (req, res) => {
-  res.send('WELCOME TO LICENSE SYSTEM');
-});
-
-
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
