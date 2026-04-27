@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>License Management System</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    input, select, button {
+      padding: 8px;
+      margin: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .delete {
+      background: red;
+      color: white;
+    }
+
+    .status {
+      background: orange;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>License Management System</h1>
+
+  <h3>Create License</h3>
+  <input type="text" id="name" placeholder="Holder Name">
+  <input type="text" id="type" placeholder="Type">
+  <input type="date" id="issueDate">
+  <input type="date" id="expiryDate">
+  <button onclick="createLicense()">Add</button>
+
+  <h3>All Licenses</h3>
+  <button onclick="loadLicenses()">Refresh</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>License No.</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="licenseTable"></tbody>
+  </table>
+</div>
+
+<script>
+const API = "http://localhost:3000/api/licenses";
+
+// Load licenses
+async function loadLicenses() {
+  const res = await fetch(API);
+  const data = await res.json();
+
+  const table = document.getElementById("licenseTable");
+  table.innerHTML = "";
+
+  data.forEach(l => {
+    table.innerHTML += `
+      <tr>
+        <td>${l.id}</td>
+        <td>${l.licenseNumber}</td>
+        <td>${l.holderName}</td>
+        <td>${l.type}</td>
+        <td>${l.status}</td>
+        <td>
+          <button class="status" onclick="changeStatus(${l.id})">Status</button>
+          <button class="delete" onclick="deleteLicense(${l.id})">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// Create license
+async function createLicense() {
+  const holderName = document.getElementById("name").value;
+  const type = document.getElementById("type").value;
+  const issueDate = document.getElementById("issueDate").value;
+  const expiryDate = document.getElementById("expiryDate").value;
+
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ holderName, type, issueDate, expiryDate })
+  });
+
+  loadLicenses();
+}
+
+// Delete license
+async function deleteLicense(id) {
+  await fetch(`${API}/${id}`, {
+    method: "DELETE"
+  });
+
+  loadLicenses();
+}
+
+// Change status
+async function changeStatus(id) {
+  const status = prompt("Enter status (active, expired, suspended, revoked, blocked):");
+  const violation = prompt("Violation (optional):");
+
+  await fetch(`${API}/${id}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status, violation })
+  });
+
+  loadLicenses();
+}
+
+// Auto load on page start
+loadLicenses();
+</script>
+
+</body>
+</html>
